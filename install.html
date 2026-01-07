@@ -75,8 +75,8 @@
 
 <body>
     <div class="card">
-        <h1>Grade Importer Installer (v8)</h1>
-        <p>Fixes: Dynamic generator to prevent syntax errors.</p>
+        <h1>Grade Importer Installer (v9)</h1>
+        <p>Fixes: Empty Excel cells now correctly marked as Absent if enabled.</p>
 
         <a id="bookmarklet-btn" class="bookmarklet-button" href="#">
             ⬇️ Drag Me to Bookmarks Bar ⬇️
@@ -93,135 +93,342 @@
         This is read by the script below and packed into the button.
     -->
     <script id="importer-source" type="text/plain">
-        var css = '#gi-overlay{position:fixed;top:20px;right:20px;width:320px;background:white;border:1px solid #ccc;box-shadow:0 4px 12px rgba(0,0,0,0.15);z-index:10000;padding:20px;font-family:sans-serif;border-radius:8px;font-size:14px}#gi-header{font-weight:bold;font-size:16px;margin-bottom:15px;display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding-bottom:10px}.gi-label{display:block;margin-bottom:4px;font-weight:500;color:#555}.gi-select{width:100%;padding:6px;border:1px solid #ddd;border-radius:4px;margin-bottom:10px}.gi-btn{background:#2563eb;color:white;border:none;padding:10px;border-radius:4px;cursor:pointer;width:100%;font-weight:bold;margin-top:10px}.gi-btn:disabled{background:#ccc;cursor:not-allowed}#gi-status{margin-top:15px;font-size:13px;color:#666;line-height:1.4;background:#f9fafb;padding:10px;border-radius:4px}';
-        var style = document.createElement('style');
-        style.textContent = css;
-        document.head.appendChild(style);
+/**
+ * Grade Importer Main Logic (v2 with Column Selection)
+ */
+(function () {
+    console.log('Initializing Grade Importer UI...');
 
-        var d = document.createElement('div');
-        d.id = 'gi-overlay';
-        d.innerHTML = '<div id="gi-header"><span>Import Grades</span><span onclick="this.parentElement.parentElement.remove()" style="cursor:pointer">&times;</span></div><input type="file" id="gi-file" accept=".xlsx" style="width:100%"/><div id="gi-map" style="display:none"><div class="gi-row"><label class="gi-label">Student Column</label><select id="gi-col-name" class="gi-select"></select></div><div class="gi-row"><label class="gi-label">Grade Column</label><select id="gi-col-grade" class="gi-select"></select></div></div><button id="gi-btn" class="gi-btn" disabled>Import Grades</button><div id="gi-msg">Select an Excel file to start.</div>';
-        document.body.appendChild(d);
+    // Styles for the floating UI
+    const style = document.createElement('style');
+    style.textContent = `
+        #gi-overlay {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 320px;
+            background: white;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        #gi-header {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        #gi-close {
+            cursor: pointer;
+            color: #999;
+            font-size: 20px;
+        }
+        #gi-close:hover { color: #333; }
+        .gi-row { margin-bottom: 10px; }
+        .gi-label { display: block; margin-bottom: 4px; font-weight: 500; color: #555; }
+        .gi-select { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; }
+        .gi-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        .gi-btn:hover { background: #1d4ed8; }
+        .gi-btn:disabled { background: #ccc; cursor: not-allowed; }
+        #gi-status {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+            background: #f9fafb;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    `;
+    document.head.appendChild(style);
 
-        var wb, json;
+    // Create UI Elements
+    const overlay = document.createElement('div');
+    overlay.id = 'gi-overlay';
 
-        document.getElementById('gi-file').onchange = function(e) {
-            var f = e.target.files[0];
-            if (!f) return;
-            var r = new FileReader();
-            r.onload = function(e) {
-                wb = XLSX.read(e.target.result, { type: 'array' });
-                json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                if (json.length) {
-                    var h = Object.keys(json[0]);
-                    var sn = document.getElementById('gi-col-name');
-                    var sg = document.getElementById('gi-col-grade');
-                    [sn, sg].forEach(s => {
-                        s.innerHTML = '';
-                        h.forEach(o => {
-                            var opt = document.createElement('option');
-                            opt.value = o;
-                            opt.text = o;
-                            s.add(opt);
-                        })
-                    });
-                    document.getElementById('gi-map').style.display = 'block';
-                    document.getElementById('gi-btn').disabled = false;
-                    document.getElementById('gi-msg').textContent = 'Columns mapped. Ready to import.';
-                } else {
-                    document.getElementById('gi-msg').textContent = 'Empty file';
+    overlay.innerHTML = `
+        <div id="gi-header">
+            <span>Import Grades</span>
+            <span id="gi-close">&times;</span>
+        </div>
+        
+        <div class="gi-row">
+            <input type="file" id="gi-file-input" accept=".xlsx, .xls" style="width: 100%" />
+        </div>
+
+        <div class="gi-row">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;">
+                <input type="checkbox" id="gi-header-check" checked> 
+                <span>Excel contains headers</span>
+            </label>
+        </div>
+
+        <div class="gi-row">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;">
+                <input type="checkbox" id="gi-empty-absent-check"> 
+                <span>Empty grade = Absent</span>
+            </label>
+        </div>
+
+        <div id="gi-mapping" style="display:none;">
+            <div class="gi-row">
+                <label class="gi-label">Student Name Column</label>
+                <select id="gi-col-name" class="gi-select"></select>
+            </div>
+            <div class="gi-row">
+                <label class="gi-label">Grade Column</label>
+                <select id="gi-col-grade" class="gi-select"></select>
+            </div>
+        </div>
+
+        <button id="gi-import-btn" class="gi-btn" disabled>Import Grades</button>
+        <div id="gi-status">Select an Excel file to start.</div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // References
+    const closeBtn = overlay.querySelector('#gi-close');
+    const fileInput = overlay.querySelector('#gi-file-input');
+    const headerCheck = overlay.querySelector('#gi-header-check');
+    const emptyAbsentCheck = overlay.querySelector('#gi-empty-absent-check');
+    const mappingDiv = overlay.querySelector('#gi-mapping');
+    const nameSelect = overlay.querySelector('#gi-col-name');
+    const gradeSelect = overlay.querySelector('#gi-col-grade');
+    const importBtn = overlay.querySelector('#gi-import-btn');
+    const statusDiv = overlay.querySelector('#gi-status');
+
+    closeBtn.onclick = () => overlay.remove();
+
+    let workbook = null;
+    let jsonData = null;
+    let currentFile = null;
+
+    fileInput.addEventListener('change', (e) => {
+        currentFile = e.target.files[0];
+        processFile();
+    });
+
+    headerCheck.addEventListener('change', () => {
+        if (currentFile) processFile();
+    });
+
+    function processFile() {
+        if (!currentFile) return;
+
+        mappingDiv.style.display = 'none';
+        importBtn.disabled = true;
+        statusDiv.textContent = 'Reading file...';
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = new Uint8Array(e.target.result);
+            try {
+                workbook = XLSX.read(data, { type: 'array' });
+
+                // Parse first sheet
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+
+                // Get header option
+                const useHeaders = headerCheck.checked;
+                const opts = useHeaders ? {} : { header: "A" };
+
+                jsonData = XLSX.utils.sheet_to_json(sheet, opts);
+
+                if (jsonData.length === 0) {
+                    statusDiv.textContent = 'File is empty.';
+                    return;
                 }
-            };
-            r.readAsArrayBuffer(f);
+
+                // Get Headers
+                const headers = Object.keys(jsonData[0]);
+
+                // Populate Selects
+                populateSelect(nameSelect, headers, ['naam', 'student', 'name']);
+                populateSelect(gradeSelect, headers, ['punt', 'score', 'cijfer', 'grade', 'result']);
+
+                mappingDiv.style.display = 'block';
+                importBtn.disabled = false;
+                statusDiv.textContent = 'File loaded. Please confirm columns.';
+
+            } catch (err) {
+                console.error(err);
+                statusDiv.textContent = 'Error parsing Excel file. Ensure it is a valid .xlsx file.';
+            }
         };
+        reader.readAsArrayBuffer(currentFile);
+    }
 
-        document.getElementById('gi-btn').onclick = function() {
-            var nk = document.getElementById('gi-col-name').value;
-            var sk = document.getElementById('gi-col-grade').value;
-            
-            var rows = document.querySelectorAll('#ctl00_ctl00_cphGeneral_cphMain_rgPuntenP_ctl00 tbody tr');
-            let m = 0, nf = 0;
+    function populateSelect(select, options, heuristics) {
+        select.innerHTML = '';
+        let selectedIndex = 0;
+        options.forEach((opt, index) => {
+            const el = document.createElement('option');
+            el.value = opt;
+            el.textContent = opt;
+            select.appendChild(el);
 
-            // SAVED STATE HACK: Find hidden field and grid
-            var hd = document.getElementById('ctl00_ctl00_cphGeneral_cphMain_txtGewijzigdPagina');
-            var gd = window.$find ? window.$find('ctl00_ctl00_cphGeneral_cphMain_rgPuntenP') : null;
+            if (heuristics.some(h => opt.toLowerCase().includes(h))) {
+                selectedIndex = index;
+            }
+        });
+        select.selectedIndex = selectedIndex;
+    }
 
-            rows.forEach(r => {
-                var nc = r.cells[1];
-                if (!nc) return;
-                var dn = nc.textContent.trim().replace(/\s*\[.*?\]$/, '').trim().toLowerCase();
-                
-                var rec = json.find(d => {
-                    var en = String(d[nk]).trim().toLowerCase();
-                    return dn === en;
-                });
+    importBtn.addEventListener('click', () => {
+        if (!jsonData) return;
 
-                if (rec) {
-                    var ipt = r.querySelector('input[name*="txtScore"]');
-                    if (ipt) {
-                        ipt.style.backgroundColor = '';
-                        nc.style.backgroundColor = '';
-                        
-                        var v = rec[sk];
-                        if (v !== undefined) {
-                            var val = String(v).trim();
-                            if (val !== '') {
-                                if (val.toUpperCase() === 'A') {
-                                    ipt.focus();
-                                    ipt.dispatchEvent(new KeyboardEvent('keydown', { key: '+', code: 'NumpadAdd', keyCode: 107, which: 107, bubbles: true }));
-                                    ipt.dispatchEvent(new KeyboardEvent('keypress', { key: '+', keyCode: 43, which: 43, bubbles: true }));
-                                    ipt.style.backgroundColor = '#cfe2ff';
-                                    m++;
-                                } else {
-                                    // 1. Click
-                                    if (ipt.onclick) ipt.onclick();
-                                    
-                                    // 2. Focus
-                                    ipt.focus();
-                                    if (ipt.onfocus) ipt.onfocus();
-                                    
-                                    // 3. Set Value
-                                    ipt.value = val;
-                                    
-                                    // 4. Signal Change
-                                    if (ipt.onkeydown) ipt.onkeydown({ keyCode: 13 });
-                                    if (ipt.onchange) ipt.onchange();
-                                    
-                                    // 5. Blur
-                                    ipt.blur();
-                                    if (ipt.onblur) ipt.onblur();
+        const nameKey = nameSelect.value;
+        const scoreKey = gradeSelect.value;
+        const emptyAsAbsent = emptyAbsentCheck.checked;
 
-                                    // 6. FORCE SAVE (Dirty State Hack)
-                                    try {
-                                        if (hd && gd) {
-                                            var ps = r.id.split('__');
-                                            if (ps.length > 1) {
-                                                var idx = parseInt(ps[ps.length - 1], 10);
-                                                var itm = gd.get_masterTableView().get_dataItems()[idx];
-                                                if (itm) {
-                                                    var id = itm.getDataKeyValue('p_examen');
-                                                    if (id && hd.value.indexOf(id + ';') === -1) {
-                                                        hd.value += id + ';';
-                                                        console.log('Forced save for:', id);
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    } catch (e) {
-                                        console.error('Error in save hack:', e);
+        processImport(nameKey, scoreKey, emptyAsAbsent);
+    });
+
+    function processImport(nameKey, scoreKey, emptyAsAbsent) {
+        statusDiv.textContent = 'Processing...';
+
+        let matches = 0;
+        let notFound = 0;
+
+        // Find table rows
+        const rows = document.querySelectorAll('#ctl00_ctl00_cphGeneral_cphMain_rgPuntenP_ctl00 tbody tr');
+
+        rows.forEach(row => {
+            // Check headers index to be sure? Assuming standard iBaMaFlex layout
+            // Usually Name is index 2 (if index 0 is checkbox/hidden) or index 1. 
+            // Based on demo: <td>Code</td><td>Name</td>...
+            const nameCell = row.cells[1];
+            if (!nameCell) return;
+
+            const domName = nameCell.textContent.trim().toLowerCase();
+
+            // Clean DOM name: remove trailing content in brackets (e.g. "Name [B]")
+            const cleanDomName = domName.replace(/\s*\[.*?\]$/, '').trim().toLowerCase();
+
+            const record = jsonData.find(d => {
+                const excelName = String(d[nameKey]).trim().toLowerCase();
+                // Strict match on cleaned name
+                return cleanDomName === excelName;
+            });
+
+            const scoreInput = row.querySelector('input[name$="txtScore"]');
+
+            // Reset styles
+            scoreInput.style.backgroundColor = '';
+            nameCell.style.backgroundColor = '';
+
+            if (record && scoreInput) {
+                // FIXED: Treat undefined as empty string. 
+                // XSLT sheet_to_json does not include keys for empty cells.
+                const scoreValue = record[scoreKey];
+                const rawScore = (scoreValue === undefined || scoreValue === null) ? '' : String(scoreValue).trim();
+
+                let effectiveScore = rawScore;
+
+                if (rawScore === '') {
+                    if (emptyAsAbsent) {
+                        // User wants empty fields in Excel to be treated as Absent
+                        effectiveScore = 'A';
+                    } else {
+                        // Regular behavior: skip empty grades
+                        return;
+                    }
+                }
+
+                // Shared function to force dirty state
+                const forceDirtyState = () => {
+                    try {
+                        var hiddenDirty = document.getElementById('ctl00_ctl00_cphGeneral_cphMain_txtGewijzigdPagina');
+                        var grid = window.$find ? window.$find('ctl00_ctl00_cphGeneral_cphMain_rgPuntenP') : null;
+
+                        if (hiddenDirty && grid) {
+                            var parts = row.id.split('__');
+                            if (parts.length > 1) {
+                                var idx = parseInt(parts[parts.length - 1], 10);
+                                var item = grid.get_masterTableView().get_dataItems()[idx];
+                                if (item) {
+                                    var id = item.getDataKeyValue("p_examen");
+                                    if (id && hiddenDirty.value.indexOf(id + ";") === -1) {
+                                        hiddenDirty.value += id + ";";
+                                        console.log("Forced dirty state for ID: " + id);
                                     }
-                                    m++;
                                 }
                             }
                         }
-                    } 
-                } else {
-                    nf++;
-                }
-            });
+                    } catch (e) {
+                        console.error("Error forcing dirty state:", e);
+                    }
+                };
 
-            document.getElementById('gi-msg').innerHTML = '<strong>Done!</strong><br>Matched: ' + m + ' student(s)<br>Not Found: ' + nf + ' student(s)';
-        };
+                if (effectiveScore.toUpperCase() === 'A') {
+                    // Handle Absent: Simulate '+' keypress
+                    // Try native focus first
+                    if (scoreInput.onclick) scoreInput.onclick();
+                    scoreInput.focus();
+
+                    // 1. Simulate key events (Legacy & Modern)
+                    const keyEvents = [
+                        new KeyboardEvent('keydown', { key: '+', code: 'NumpadAdd', keyCode: 107, which: 107, bubbles: true }),
+                        new KeyboardEvent('keypress', { key: '+', charCode: 43, keyCode: 43, which: 43, bubbles: true }),
+                        new KeyboardEvent('keyup', { key: '+', code: 'NumpadAdd', keyCode: 107, which: 107, bubbles: true }),
+                        new InputEvent('input', { data: '+', inputType: 'insertText', bubbles: true })
+                    ];
+                    
+                    keyEvents.forEach(evt => scoreInput.dispatchEvent(evt));
+
+                    // 2. Trigger dirty state
+                    scoreInput.style.backgroundColor = '#cfe2ff'; // Blue-ish
+                    forceDirtyState();
+                    matches++;
+
+                } else {
+                    // Standard score handling
+                    if (scoreInput.onclick) scoreInput.onclick();
+                    scoreInput.focus();
+                    if (scoreInput.onfocus) scoreInput.onfocus(); 
+
+                    scoreInput.value = effectiveScore;
+
+                    // Signal changes
+                    if (scoreInput.onkeydown) scoreInput.onkeydown({ keyCode: 13 }); 
+                    if (scoreInput.onchange) scoreInput.onchange();
+
+                    scoreInput.blur();
+                    if (scoreInput.onblur) scoreInput.onblur();
+
+                    forceDirtyState();
+                    matches++;
+                }
+
+            } else {
+                notFound++;
+            }
+        });
+
+        statusDiv.innerHTML = `<strong>Done!</strong><br>Matched: ${matches} student(s)<br>Not found: ${notFound} student(s)`;
+    }
+
+})();
     </script>
 
     <script>

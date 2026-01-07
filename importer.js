@@ -79,6 +79,20 @@
             <input type="file" id="gi-file-input" accept=".xlsx, .xls" style="width: 100%" />
         </div>
 
+        <div class="gi-row">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;">
+                <input type="checkbox" id="gi-header-check" checked> 
+                <span>Excel contains headers</span>
+            </label>
+        </div>
+
+        <div class="gi-row">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;">
+                <input type="checkbox" id="gi-empty-absent-check"> 
+                <span>Empty grade in excel = Absent</span>
+            </label>
+        </div>
+
         <div id="gi-mapping" style="display:none;">
             <div class="gi-row">
                 <label class="gi-label">Student Name Column</label>
@@ -99,6 +113,8 @@
     // References
     const closeBtn = overlay.querySelector('#gi-close');
     const fileInput = overlay.querySelector('#gi-file-input');
+    const headerCheck = overlay.querySelector('#gi-header-check');
+    const emptyAbsentCheck = overlay.querySelector('#gi-empty-absent-check');
     const mappingDiv = overlay.querySelector('#gi-mapping');
     const nameSelect = overlay.querySelector('#gi-col-name');
     const gradeSelect = overlay.querySelector('#gi-col-grade');
@@ -109,10 +125,19 @@
 
     let workbook = null;
     let jsonData = null;
+    let currentFile = null;
 
     fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+        currentFile = e.target.files[0];
+        processFile();
+    });
+
+    headerCheck.addEventListener('change', () => {
+        if (currentFile) processFile();
+    });
+
+    function processFile() {
+        if (!currentFile) return;
 
         mappingDiv.style.display = 'none';
         importBtn.disabled = true;
@@ -127,8 +152,12 @@
                 // Parse first sheet
                 const sheetName = workbook.SheetNames[0];
                 const sheet = workbook.Sheets[sheetName];
-                // Get header row
-                jsonData = XLSX.utils.sheet_to_json(sheet);
+
+                // Get header option
+                const useHeaders = headerCheck.checked;
+                const opts = useHeaders ? {} : { header: "A" };
+
+                jsonData = XLSX.utils.sheet_to_json(sheet, opts);
 
                 if (jsonData.length === 0) {
                     statusDiv.textContent = 'File is empty.';
@@ -151,8 +180,8 @@
                 statusDiv.textContent = 'Error parsing Excel file. Ensure it is a valid .xlsx file.';
             }
         };
-        reader.readAsArrayBuffer(file);
-    });
+        reader.readAsArrayBuffer(currentFile);
+    }
 
     function populateSelect(select, options, heuristics) {
         select.innerHTML = '';
@@ -175,11 +204,12 @@
 
         const nameKey = nameSelect.value;
         const scoreKey = gradeSelect.value;
+        const emptyAsAbsent = emptyAbsentCheck.checked;
 
-        processImport(nameKey, scoreKey);
+        processImport(nameKey, scoreKey, emptyAsAbsent);
     });
 
-    function processImport(nameKey, scoreKey) {
+    function processImport(nameKey, scoreKey, emptyAsAbsent) {
         statusDiv.textContent = 'Processing...';
 
         let matches = 0;
@@ -213,79 +243,88 @@
             nameCell.style.backgroundColor = '';
 
             if (record && scoreInput) {
+                // FIXED: Treat undefined as empty string. 
+                // XSLT sheet_to_json does not include keys for empty cells.
                 const scoreValue = record[scoreKey];
+                const rawScore = (scoreValue === undefined || scoreValue === null) ? '' : String(scoreValue).trim();
 
-                if (scoreValue !== undefined) {
-                    const score = String(scoreValue).trim();
+                let effectiveScore = rawScore;
 
-                    if (score === '') {
-                        // Skip empty grades
-                        // keep yellow? or white? User said "skippen". 
-                        // Let's leave it alone (white) to match "skip".
-                        // But maybe yellow is useful to know match occurred? 
-                        // "die student gewoon skippen" -> Do nothing.
+                if (rawScore === '') {
+                    if (emptyAsAbsent) {
+                        // User wants empty fields in Excel to be treated as Absent
+                        effectiveScore = 'A';
+                    } else {
+                        // Regular behavior: skip empty grades
                         return;
                     }
+                }
 
-                    if (score.toUpperCase() === 'A') {
-                        // Handle Absent: Simulate '+' keypress
-                        scoreInput.focus();
-                        scoreInput.dispatchEvent(new KeyboardEvent('keydown', { key: '+', code: 'NumpadAdd', keyCode: 107, which: 107, bubbles: true }));
-                        scoreInput.dispatchEvent(new KeyboardEvent('keypress', { key: '+', keyCode: 43, which: 43, bubbles: true }));
-                        scoreInput.style.backgroundColor = '#cfe2ff'; // Blue-ish
-                        matches++;
-                    } else {
-                        // Simulate full interaction sequence including click
-                        if (scoreInput.onclick) scoreInput.onclick();
-                        scoreInput.focus();
-                        if (scoreInput.onfocus) scoreInput.onfocus(); // Double tap just in case
+                // Shared function to force dirty state
+                const forceDirtyState = () => {
+                    try {
+                        var hiddenDirty = document.getElementById('ctl00_ctl00_cphGeneral_cphMain_txtGewijzigdPagina');
+                        var grid = window.$find ? window.$find('ctl00_ctl00_cphGeneral_cphMain_rgPuntenP') : null;
 
-                        scoreInput.value = score;
-
-                        // Signal changes
-                        if (scoreInput.onkeydown) scoreInput.onkeydown({ keyCode: 13 }); // Enter key simulation might help?
-                        if (scoreInput.onchange) scoreInput.onchange();
-
-                        scoreInput.blur();
-                        if (scoreInput.onblur) scoreInput.onblur();
-
-                        // --- SAVED STATE HACK ---
-                        // Force the page to recognize this row as "dirty" by adding the ID to the hidden field.
-                        try {
-                            // Find hidden field and grid if we haven't already (declared outside loop in full version, but here inside for safety in this block patch)
-                            var hiddenDirty = document.getElementById('ctl00_ctl00_cphGeneral_cphMain_txtGewijzigdPagina');
-                            var grid = window.$find ? window.$find('ctl00_ctl00_cphGeneral_cphMain_rgPuntenP') : null;
-
-                            if (hiddenDirty && grid) {
-                                // Extract index from row ID: "ctl00_ctl00_cphGeneral_cphMain_rgPuntenP_ctl00__15" -> 15
-                                var parts = row.id.split('__');
-                                if (parts.length > 1) {
-                                    var idx = parseInt(parts[parts.length - 1], 10);
-                                    // Get data item from Telerik Grid
-                                    var item = grid.get_masterTableView().get_dataItems()[idx];
-                                    if (item) {
-                                        var id = item.getDataKeyValue("p_examen");
-                                        // Append ID if not present
-                                        if (id && hiddenDirty.value.indexOf(id + ";") === -1) {
-                                            hiddenDirty.value += id + ";";
-                                            console.log("Forced dirty state for ID: " + id);
-                                        }
+                        if (hiddenDirty && grid) {
+                            var parts = row.id.split('__');
+                            if (parts.length > 1) {
+                                var idx = parseInt(parts[parts.length - 1], 10);
+                                var item = grid.get_masterTableView().get_dataItems()[idx];
+                                if (item) {
+                                    var id = item.getDataKeyValue("p_examen");
+                                    if (id && hiddenDirty.value.indexOf(id + ";") === -1) {
+                                        hiddenDirty.value += id + ";";
+                                        console.log("Forced dirty state for ID: " + id);
                                     }
                                 }
                             }
-                        } catch (e) {
-                            console.error("Error forcing dirty state:", e);
                         }
-                        // ------------------------
-
-                        // REMOVED manual styling so we can see if the native logic (red/white) works
-                        // scoreInput.style.backgroundColor = '#d4edda'; 
-                        matches++;
+                    } catch (e) {
+                        console.error("Error forcing dirty state:", e);
                     }
+                };
+
+                if (effectiveScore.toUpperCase() === 'A') {
+                    // Handle Absent: Simulate '+' keypress
+                    // Try native focus first
+                    if (scoreInput.onclick) scoreInput.onclick();
+                    scoreInput.focus();
+
+                    // 1. Simulate key events (Legacy & Modern)
+                    const keyEvents = [
+                        new KeyboardEvent('keydown', { key: '+', code: 'NumpadAdd', keyCode: 107, which: 107, bubbles: true }),
+                        new KeyboardEvent('keypress', { key: '+', charCode: 43, keyCode: 43, which: 43, bubbles: true }),
+                        new KeyboardEvent('keyup', { key: '+', code: 'NumpadAdd', keyCode: 107, which: 107, bubbles: true }),
+                        new InputEvent('input', { data: '+', inputType: 'insertText', bubbles: true })
+                    ];
+
+                    keyEvents.forEach(evt => scoreInput.dispatchEvent(evt));
+
+                    // 2. Trigger dirty state
+                    scoreInput.style.backgroundColor = '#cfe2ff'; // Blue-ish
+                    forceDirtyState();
+                    matches++;
+
                 } else {
-                    // undefined score in excel (empty column)
-                    // nameCell.style.backgroundColor = '#fff3cd'; 
+                    // Standard score handling
+                    if (scoreInput.onclick) scoreInput.onclick();
+                    scoreInput.focus();
+                    if (scoreInput.onfocus) scoreInput.onfocus();
+
+                    scoreInput.value = effectiveScore;
+
+                    // Signal changes
+                    if (scoreInput.onkeydown) scoreInput.onkeydown({ keyCode: 13 });
+                    if (scoreInput.onchange) scoreInput.onchange();
+
+                    scoreInput.blur();
+                    if (scoreInput.onblur) scoreInput.onblur();
+
+                    forceDirtyState();
+                    matches++;
                 }
+
             } else {
                 notFound++;
             }
