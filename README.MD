@@ -7,8 +7,8 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 1.  Navigeer naar [de installatie pagina](https://timdams.github.io/ibamaflexPuntenImporter/install.html).
 2.  Zorg dat je **Bladwijzerbalk** (Bookmarks bar) zichtbaar is.
     *   *Sneltoets*: `Ctrl + Shift + B`
-3.  Sleep de grote blauwe knop **"⬇️ Drag Me to Bookmarks Bar ⬇️"** naar je bladwijzerbalk.
-4.  Klaar! Je ziet nu een nieuwe knop **"Import Grades"** (of de naam die je koos) in je balk staan.
+3.  Sleep de grote blauwe knop **"🔢IbamaflexImporter"** naar je bladwijzerbalk.
+4.  Klaar! Je ziet nu een nieuwe knop **"🔢IbamaflexImporter"** (of de naam die je koos) in je balk staan.
 
 ## 📝 Gebruik
 
@@ -16,7 +16,7 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
     *   Open de puntenlijst pagina in iBaMaFlex waar je de punten wilt invoeren.
 
 2.  **Start de Tool**
-    *   Klik op de **"Import Grades"** knop in je bladwijzerbalk.
+    *   Klik op de **"🔢IbamaflexImporter"** knop in je bladwijzerbalk.
     *   Er verschijnt een pop-up venster rechtsboven in je scherm.
 
 3.  **Excel Inladen**
@@ -25,10 +25,10 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 
 4.  **Instellingen**
     *   **Excel contains headers**: Vink dit uit als je eerste rij direct een student bevat, en niet de titels van de kolommen (standaard aan).
-    *   **Empty grade in excel = Absent**: Vink dit aan om lege cellen in Excel te behandelen als een "Afwezigheid" (standaard uit).
+    *   **Empty grade in excel = Absent**: Vink dit aan om studenten op afwezig te zetten indien ze in je excel geen waarde ingevuld hebben (standaard uit). (niet gevonden studenten in je excel worden altijd als leeg aangeduid)
 
 5.  **Kolommen Kiezen**
-    *   De tool probeert automatisch te raden welke kolommen de **Student** en het **Cijfer** bevatten.
+    *   De tool probeert automatisch te matchen welke kolommen de **Student** en het **Cijfer** bevatten.
     *   Controleer de selectie in de dropdown menu's en pas aan indien nodig.
 
 6.  **Importeren & Log**
