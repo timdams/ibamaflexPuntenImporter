@@ -235,8 +235,51 @@
                         scoreInput.style.backgroundColor = '#cfe2ff'; // Blue-ish
                         matches++;
                     } else {
+                        // Simulate full interaction sequence including click
+                        if (scoreInput.onclick) scoreInput.onclick();
+                        scoreInput.focus();
+                        if (scoreInput.onfocus) scoreInput.onfocus(); // Double tap just in case
+
                         scoreInput.value = score;
-                        scoreInput.style.backgroundColor = '#d4edda'; // Green
+
+                        // Signal changes
+                        if (scoreInput.onkeydown) scoreInput.onkeydown({ keyCode: 13 }); // Enter key simulation might help?
+                        if (scoreInput.onchange) scoreInput.onchange();
+
+                        scoreInput.blur();
+                        if (scoreInput.onblur) scoreInput.onblur();
+
+                        // --- SAVED STATE HACK ---
+                        // Force the page to recognize this row as "dirty" by adding the ID to the hidden field.
+                        try {
+                            // Find hidden field and grid if we haven't already (declared outside loop in full version, but here inside for safety in this block patch)
+                            var hiddenDirty = document.getElementById('ctl00_ctl00_cphGeneral_cphMain_txtGewijzigdPagina');
+                            var grid = window.$find ? window.$find('ctl00_ctl00_cphGeneral_cphMain_rgPuntenP') : null;
+
+                            if (hiddenDirty && grid) {
+                                // Extract index from row ID: "ctl00_ctl00_cphGeneral_cphMain_rgPuntenP_ctl00__15" -> 15
+                                var parts = row.id.split('__');
+                                if (parts.length > 1) {
+                                    var idx = parseInt(parts[parts.length - 1], 10);
+                                    // Get data item from Telerik Grid
+                                    var item = grid.get_masterTableView().get_dataItems()[idx];
+                                    if (item) {
+                                        var id = item.getDataKeyValue("p_examen");
+                                        // Append ID if not present
+                                        if (id && hiddenDirty.value.indexOf(id + ";") === -1) {
+                                            hiddenDirty.value += id + ";";
+                                            console.log("Forced dirty state for ID: " + id);
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            console.error("Error forcing dirty state:", e);
+                        }
+                        // ------------------------
+
+                        // REMOVED manual styling so we can see if the native logic (red/white) works
+                        // scoreInput.style.backgroundColor = '#d4edda'; 
                         matches++;
                     }
                 } else {
