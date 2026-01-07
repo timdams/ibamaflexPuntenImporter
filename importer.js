@@ -12,6 +12,8 @@
             top: 20px;
             right: 20px;
             width: 320px;
+            max-height: 90vh;
+            overflow-y: auto;
             background: white;
             border: 1px solid #ccc;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -53,6 +55,11 @@
         }
         .gi-btn:hover { background: #1d4ed8; }
         .gi-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .gi-btn-secondary {
+            background: #6c757d;
+            margin-top: 10px;
+        }
+        .gi-btn-secondary:hover { background: #5a6268; }
         #gi-status {
             margin-top: 15px;
             font-size: 13px;
@@ -62,6 +69,24 @@
             padding: 10px;
             border-radius: 4px;
         }
+        #gi-log-container {
+            display: none;
+            margin-top: 15px;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .gi-log-item {
+            padding: 4px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .gi-log-item:last-child { border-bottom: none; }
+        .gi-log-warn { color: #d97706; }
+        .gi-log-info { color: #2563eb; }
     `;
     document.head.appendChild(style);
 
@@ -105,7 +130,10 @@
         </div>
 
         <button id="gi-import-btn" class="gi-btn" disabled>Import Grades</button>
+        <button id="gi-log-btn" class="gi-btn gi-btn-secondary" style="display:none;">Show Log</button>
+        
         <div id="gi-status">Select an Excel file to start.</div>
+        <div id="gi-log-container"></div>
     `;
 
     document.body.appendChild(overlay);
@@ -119,13 +147,16 @@
     const nameSelect = overlay.querySelector('#gi-col-name');
     const gradeSelect = overlay.querySelector('#gi-col-grade');
     const importBtn = overlay.querySelector('#gi-import-btn');
+    const logBtn = overlay.querySelector('#gi-log-btn');
     const statusDiv = overlay.querySelector('#gi-status');
+    const logContainer = overlay.querySelector('#gi-log-container');
 
     closeBtn.onclick = () => overlay.remove();
 
     let workbook = null;
     let jsonData = null;
     let currentFile = null;
+    let importLog = [];
 
     fileInput.addEventListener('change', (e) => {
         currentFile = e.target.files[0];
@@ -136,11 +167,35 @@
         if (currentFile) processFile();
     });
 
+    logBtn.addEventListener('click', () => {
+        if (logContainer.style.display === 'none') {
+            logContainer.style.display = 'block';
+            logBtn.textContent = 'Hide Log';
+            renderLog();
+        } else {
+            logContainer.style.display = 'none';
+            logBtn.textContent = 'Show Log';
+        }
+    });
+
+    function renderLog() {
+        if (importLog.length === 0) {
+            logContainer.innerHTML = '<div class="gi-log-item">No events to report.</div>';
+            return;
+        }
+        logContainer.innerHTML = importLog.map(item => {
+            const cls = item.type === 'warn' ? 'gi-log-warn' : 'gi-log-info';
+            return `<div class="gi-log-item ${cls}">${item.msg}</div>`;
+        }).join('');
+    }
+
     function processFile() {
         if (!currentFile) return;
 
         mappingDiv.style.display = 'none';
         importBtn.disabled = true;
+        logBtn.style.display = 'none';
+        logContainer.style.display = 'none';
         statusDiv.textContent = 'Reading file...';
 
         const reader = new FileReader();
@@ -211,6 +266,9 @@
 
     function processImport(nameKey, scoreKey, emptyAsAbsent) {
         statusDiv.textContent = 'Processing...';
+        importLog = []; // Reset log
+        logBtn.style.display = 'none';
+        logContainer.style.display = 'none';
 
         let matches = 0;
         let notFound = 0;
@@ -218,21 +276,30 @@
         // Find table rows
         const rows = document.querySelectorAll('#ctl00_ctl00_cphGeneral_cphMain_rgPuntenP_ctl00 tbody tr');
 
+        // Capture data from the DOM first for efficient matching logic? 
+        // Or just iterate rows as is. Iterate rows is fine.
+
+        // We also want to know which Excel students were NOT found in the DOM (optional, but good for log)
+        // Let's create a Set of found names from Excel to track reverse.
+        // Actually, the request said "Student X not found in Excel". That means iterating DOM rows and checking Excel.
+        // Wait, "deze studenten niet in de excel gevonden" -> "This student (from DOM?) not found in Excel"?
+        // Usually import reports "Row X from Excel not found in DOM".
+        // BUT phrasing "deze studenten niet in de excel gevonden" implies we look at the class list (DOM) and see who is missing in the file.
+        // I will log both if possible, or stick to the requested direction.
+        // Let's assume the user means: "I have a list of students in the app, and I want to know who was NOT in the Excel file".
+
+        const excelNamesSet = new Set(); // To track which excel records were used
+
         rows.forEach(row => {
-            // Check headers index to be sure? Assuming standard iBaMaFlex layout
-            // Usually Name is index 2 (if index 0 is checkbox/hidden) or index 1. 
-            // Based on demo: <td>Code</td><td>Name</td>...
             const nameCell = row.cells[1];
             if (!nameCell) return;
 
-            const domName = nameCell.textContent.trim().toLowerCase();
-
-            // Clean DOM name: remove trailing content in brackets (e.g. "Name [B]")
+            const domName = nameCell.textContent.trim();
             const cleanDomName = domName.replace(/\s*\[.*?\]$/, '').trim().toLowerCase();
+            const originalDomName = cleanDomName; // For display
 
             const record = jsonData.find(d => {
                 const excelName = String(d[nameKey]).trim().toLowerCase();
-                // Strict match on cleaned name
                 return cleanDomName === excelName;
             });
 
@@ -243,8 +310,11 @@
             nameCell.style.backgroundColor = '';
 
             if (record && scoreInput) {
+                // Found match
+                const excelNameKey = String(record[nameKey]).trim().toLowerCase();
+                excelNamesSet.add(excelNameKey);
+
                 // FIXED: Treat undefined as empty string. 
-                // XSLT sheet_to_json does not include keys for empty cells.
                 const scoreValue = record[scoreKey];
                 const rawScore = (scoreValue === undefined || scoreValue === null) ? '' : String(scoreValue).trim();
 
@@ -252,10 +322,11 @@
 
                 if (rawScore === '') {
                     if (emptyAsAbsent) {
-                        // User wants empty fields in Excel to be treated as Absent
                         effectiveScore = 'A';
                     } else {
                         // Regular behavior: skip empty grades
+                        // Log that we skipped?
+                        // importLog.push({ type: 'info', msg: `Skipped ${domName} (Empty grade)` });
                         return;
                     }
                 }
@@ -275,7 +346,6 @@
                                     var id = item.getDataKeyValue("p_examen");
                                     if (id && hiddenDirty.value.indexOf(id + ";") === -1) {
                                         hiddenDirty.value += id + ";";
-                                        console.log("Forced dirty state for ID: " + id);
                                     }
                                 }
                             }
@@ -286,12 +356,10 @@
                 };
 
                 if (effectiveScore.toUpperCase() === 'A') {
-                    // Handle Absent: Simulate '+' keypress
-                    // Try native focus first
+                    // Handle Absent
                     if (scoreInput.onclick) scoreInput.onclick();
                     scoreInput.focus();
 
-                    // 1. Simulate key events (Legacy & Modern)
                     const keyEvents = [
                         new KeyboardEvent('keydown', { key: '+', code: 'NumpadAdd', keyCode: 107, which: 107, bubbles: true }),
                         new KeyboardEvent('keypress', { key: '+', charCode: 43, keyCode: 43, which: 43, bubbles: true }),
@@ -301,36 +369,43 @@
 
                     keyEvents.forEach(evt => scoreInput.dispatchEvent(evt));
 
-                    // 2. Trigger dirty state
                     scoreInput.style.backgroundColor = '#cfe2ff'; // Blue-ish
                     forceDirtyState();
                     matches++;
+                    importLog.push({ type: 'info', msg: `Set ABSENT for: ${domName}` });
 
                 } else {
-                    // Standard score handling
+                    // Standard score
                     if (scoreInput.onclick) scoreInput.onclick();
                     scoreInput.focus();
-                    if (scoreInput.onfocus) scoreInput.onfocus();
 
                     scoreInput.value = effectiveScore;
 
-                    // Signal changes
                     if (scoreInput.onkeydown) scoreInput.onkeydown({ keyCode: 13 });
                     if (scoreInput.onchange) scoreInput.onchange();
-
-                    scoreInput.blur();
                     if (scoreInput.onblur) scoreInput.onblur();
 
                     forceDirtyState();
                     matches++;
+                    // Optional: Log success? Too spammy for large classes.
                 }
 
             } else {
                 notFound++;
+                // Log that this student was not found in Excel
+                importLog.push({ type: 'warn', msg: `Not found in Excel: ${domName}` });
             }
         });
 
-        statusDiv.innerHTML = `<strong>Done!</strong><br>Matched: ${matches} student(s)<br>Not found: ${notFound} student(s)`;
+        statusDiv.innerHTML = `<strong>Done!</strong><br>Matched: ${matches}<br>Not found: ${notFound}`;
+
+        // Show Log Button
+        logBtn.style.display = 'block';
+        if (importLog.length > 0) {
+            logBtn.textContent = `Show Log (${importLog.length})`;
+        } else {
+            logBtn.textContent = "Show Log";
+        }
     }
 
 })();
