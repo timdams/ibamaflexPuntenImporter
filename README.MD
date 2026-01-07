@@ -4,7 +4,7 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 
 ## 🚀 Installatie
 
-1.  Open het bestand `install.html` in deze map met je browser (Chrome/Edge/Firefox).
+1.  Navigeer naar [de installatie pagina](https://timdams.github.io/ibamaflexPuntenImporter/install.html).
 2.  Zorg dat je **Bladwijzerbalk** (Bookmarks bar) zichtbaar is.
     *   *Sneltoets*: `Ctrl + Shift + B`
 3.  Sleep de grote blauwe knop **"⬇️ Drag Me to Bookmarks Bar ⬇️"** naar je bladwijzerbalk.
