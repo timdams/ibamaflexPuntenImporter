@@ -22,19 +22,24 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 3.  **Excel Inladen**
     *   Klik op "Bestand kiezen" en selecteer je Excel-bestand (`.xlsx`).
     
-4.  **Kolommen Kiezen**
+
+4.  **Instellingen**
+    *   **Excel contains headers**: Vink dit uit als je eerste rij direct een student bevat, en niet de titels van de kolommen (standaard aan).
+    *   **Empty grade in excel = Absent**: Vink dit aan om lege cellen in Excel te behandelen als een "Afwezigheid" (standaard uit).
+
+5.  **Kolommen Kiezen**
     *   De tool probeert automatisch te raden welke kolommen de **Student** en het **Cijfer** bevatten.
     *   Controleer de selectie in de dropdown menu's en pas aan indien nodig.
 
-5.  **Importeren**
+6.  **Importeren & Log**
     *   Klik op **"Import Grades"**.
-    *   De tool verwerkt de lijst:
+    *   De tool verwerkt de lijst en toont een korte samenvatting.
+    *   **Show Log**: Klik op deze knop (verschijnt na import) om details te zien over studenten die niet gevonden zijn of die op "Afwezig" gezet zijn.
     *   ✅ **Groen**: Punt succesvol ingevuld.
     *   🔵 **Blauw**: Afwezigheid (`A`) ingevuld (simuleert `+` toets).
-    *   ⚠️ **Geel**: Student gevonden in Excel, maar geen punt aanwezig.
     *   ⚪ **Wit**: Student niet gevonden in Excel.
 
-6.  **Controleren & Opslaan**
+7.  **Controleren & Opslaan**
     *   Kijk de ingevulde punten na.
     *   Klik onderaan de pagina op **Opslaan** om te bevestigen.
 
@@ -48,6 +53,7 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 ## 🅰️ Afwezigheden
 
 *   Als je in de Excel een **"A"** (of "a") als cijfer zet, zal de tool dit herkennen als "Afwezig".
+*   Je kan ook de optie **"Empty grade in excel = Absent"** aanvinken. Dan worden lege cellen ook als afwezigheid behandeld.
 *   In plaats van "A" in te vullen, simuleert de tool een druk op de **`+` toets**.
 *   Dit zorgt ervoor dat iBaMaFlex correct de status "Niet deelgenomen" activeert.
 
