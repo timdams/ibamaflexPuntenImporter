@@ -28,14 +28,28 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 
 5.  **Importeren**
     *   Klik op **"Import Grades"**.
-    *   De tool zoekt nu voor elke student in de lijst naar een overeenkomstige naam in je Excel.
+    *   De tool verwerkt de lijst:
     *   ✅ **Groen**: Punt succesvol ingevuld.
+    *   🔵 **Blauw**: Afwezigheid (`A`) ingevuld (simuleert `+` toets).
     *   ⚠️ **Geel**: Student gevonden in Excel, maar geen punt aanwezig.
-    *   ⚪ **Wit**: Student niet gevonden in Excel (wordt overgeslagen).
+    *   ⚪ **Wit**: Student niet gevonden in Excel.
 
 6.  **Controleren & Opslaan**
     *   Kijk de ingevulde punten na.
     *   Klik onderaan de pagina op **Opslaan** om te bevestigen.
+
+## ⚙️ Hoe werkt het matchen?
+
+*   **Strikte Naamcontrole**: De naam in Excel moet **exact** overeenkomen met de naam in iBaMaFlex.
+    *   *Voorbeeld*: "Tim Dams" matcht **niet** met "Timm Dams" (typfout).
+*   **Suffix Negeren**: De tool negeert automatisch toevoegingen tussen vierkante haken in iBaMaFlex.
+    *   *Voorbeeld*: "Tim Dams" in Excel matcht met "Tim Dams [B]" in iBaMaFlex.
+
+## 🅰️ Afwezigheden
+
+*   Als je in de Excel een **"A"** (of "a") als cijfer zet, zal de tool dit herkennen als "Afwezig".
+*   In plaats van "A" in te vullen, simuleert de tool een druk op de **`+` toets**.
+*   Dit zorgt ervoor dat iBaMaFlex correct de status "Niet deelgenomen" activeert.
 
 ## ❓ Veelgestelde Vragen
 
@@ -43,4 +57,4 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 Nee. De tool werkt volledig lokaal in je browser. Je Excel-bestand verlaat nooit je computer.
 
 **Werkt dit met elke Excel?**
-Ja, zolang er maar een kolom is met namen en een kolom met cijfers. De importer probeert namen flexibel te matchen (bv. "Janssens Jan" met "Jan Janssens"), maar exacte schrijfwijze werkt het best.
+Ja, zolang er maar een kolom is met namen en een kolom met cijfers.

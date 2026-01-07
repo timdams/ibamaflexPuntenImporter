@@ -213,18 +213,38 @@
             nameCell.style.backgroundColor = '';
 
             if (record && scoreInput) {
-                const score = record[scoreKey];
-                if (score !== undefined) {
-                    scoreInput.value = score;
-                    scoreInput.style.backgroundColor = '#d4edda'; // Green
-                    matches++;
+                const scoreValue = record[scoreKey];
+
+                if (scoreValue !== undefined) {
+                    const score = String(scoreValue).trim();
+
+                    if (score === '') {
+                        // Skip empty grades
+                        // keep yellow? or white? User said "skippen". 
+                        // Let's leave it alone (white) to match "skip".
+                        // But maybe yellow is useful to know match occurred? 
+                        // "die student gewoon skippen" -> Do nothing.
+                        return;
+                    }
+
+                    if (score.toUpperCase() === 'A') {
+                        // Handle Absent: Simulate '+' keypress
+                        scoreInput.focus();
+                        scoreInput.dispatchEvent(new KeyboardEvent('keydown', { key: '+', code: 'NumpadAdd', keyCode: 107, which: 107, bubbles: true }));
+                        scoreInput.dispatchEvent(new KeyboardEvent('keypress', { key: '+', keyCode: 43, which: 43, bubbles: true }));
+                        scoreInput.style.backgroundColor = '#cfe2ff'; // Blue-ish
+                        matches++;
+                    } else {
+                        scoreInput.value = score;
+                        scoreInput.style.backgroundColor = '#d4edda'; // Green
+                        matches++;
+                    }
                 } else {
-                    nameCell.style.backgroundColor = '#fff3cd'; // Yellow (found but no score)
+                    // undefined score in excel (empty column)
+                    // nameCell.style.backgroundColor = '#fff3cd'; 
                 }
             } else {
                 notFound++;
-                // Optional: Highlight missing
-                // nameCell.style.backgroundColor = '#fce7f3'; 
             }
         });
 
