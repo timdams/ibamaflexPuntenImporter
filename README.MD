@@ -10,6 +10,8 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 3.  Sleep de grote blauwe knop **"🔢IbamaflexImporter"** naar je bladwijzerbalk.
 4.  Klaar! Je ziet nu een nieuwe knop **"🔢IbamaflexImporter"** (of de naam die je koos) in je balk staan.
 
+**🚨VOOR JE DE TOOL GEBRUIKT: Lees alsjeblieft goed de werking hierna na EN zeker de teksten met 🚨.**
+
 ## 📝 Gebruik
 
 1.  **Navigeer naar iBaMaFlex**
@@ -35,7 +37,7 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 6.  **Importeren & Log**
     *   Klik op **"Import Grades"**.
     *   De tool verwerkt de lijst en toont een korte samenvatting.
-    *   **Show Log**: Klik op deze knop (verschijnt na import) om details te zien over studenten die niet gevonden zijn of die op "Afwezig" gezet zijn. **🚨BEKIJK DEZE LOG GOED. ER WORDT VANUIT DE STUDENTEN OP IBAMAFLEX GEWERKT. NIET VANUIT JE MOGELIJK AL OUTDATED EXCEL.**
+    *   **Show Log**: Klik op deze knop (verschijnt na import) om details te zien over studenten die niet gevonden zijn of die op "Afwezig" gezet zijn. **🚨BEKIJK DEZE LOG GOED.🚨 ER WORDT VANUIT DE STUDENTEN OP IBAMAFLEX GEWERKT. NIET VANUIT JE MOGELIJK AL OUTDATED EXCEL.**
     *   ✅ **Groen**: Punt succesvol ingevuld.
     *   🔵 **Blauw**: Afwezigheid (`A`) ingevuld (simuleert `+` toets).
     *   ⚪ **Wit**: Student niet gevonden in Excel.
@@ -43,6 +45,7 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 7.  **Controleren & Opslaan**
     *   Kijk de ingevulde punten na.
     *   Klik onderaan de pagina op **Opslaan** om te bevestigen.
+    *   **🚨KLIK ZEKER NIET OP NAAR VOLGENDE PUNTENLIJST🚨**: druk op stoppen (**NIET VERGRENDELEN**) zodat je terug in het hoofdscherm van ibamaflex komt. En heropen dan de puntenlijst voor je dan beslist om al dan niet te vergrendelen.
 
 ## ⚙️ Hoe werkt het matchen?
 
