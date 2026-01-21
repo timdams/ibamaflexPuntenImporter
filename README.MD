@@ -13,7 +13,7 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 ## 📝 Gebruik
 
 1.  **Navigeer naar iBaMaFlex**
-    *   Open de puntenlijst pagina in iBaMaFlex waar je de punten wilt invoeren.
+    *   Open de puntenlijst pagina in iBaMaFlex waar je de punten wilt invoeren. **OPGELET: doe dit best groep per groep.**
 
 2.  **Start de Tool**
     *   Klik op de **"🔢IbamaflexImporter"** knop in je bladwijzerbalk.
@@ -21,7 +21,8 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 
 3.  **Excel Inladen**
     *   Klik op "Bestand kiezen" en selecteer je Excel-bestand (`.xlsx`).
-    
+    *  Merk op dat deze puntenlijst ook punten mag bevatten van andere klassen of groeppen. Alleen de studenten die in iBaMaFlex staan, zullen punten krijgen.
+
 
 4.  **Instellingen**
     *   **Excel contains headers**: Vink dit uit als je eerste rij direct een student bevat, en niet de titels van de kolommen (standaard aan).
@@ -34,7 +35,7 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 6.  **Importeren & Log**
     *   Klik op **"Import Grades"**.
     *   De tool verwerkt de lijst en toont een korte samenvatting.
-    *   **Show Log**: Klik op deze knop (verschijnt na import) om details te zien over studenten die niet gevonden zijn of die op "Afwezig" gezet zijn.
+    *   **Show Log**: Klik op deze knop (verschijnt na import) om details te zien over studenten die niet gevonden zijn of die op "Afwezig" gezet zijn. **🚨BEKIJK DEZE LOG GOED. ER WORDT VANUIT DE STUDENTEN OP IBAMAFLEX GEWERKT. NIET VANUIT JE MOGELIJK AL OUTDATED EXCEL.**
     *   ✅ **Groen**: Punt succesvol ingevuld.
     *   🔵 **Blauw**: Afwezigheid (`A`) ingevuld (simuleert `+` toets).
     *   ⚪ **Wit**: Student niet gevonden in Excel.

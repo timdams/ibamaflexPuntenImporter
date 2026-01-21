@@ -1,0 +1,1 @@
+remark koen: Dus eerst heb ik die als Niet deelgenomen gezet. Dan toch punten. Dan moet ik die manueel terug op deelgenomen zetten en punten opnieuw ingeven. Niet moeilik maar automatiseerbaar denk ik
