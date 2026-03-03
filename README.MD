@@ -12,6 +12,8 @@ Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaF
 
 **🚨VOOR JE DE TOOL GEBRUIKT: Lees alsjeblieft goed de werking hierna na EN zeker de teksten met 🚨.**
 
+![](punten.png)
+
 ## 📝 Gebruik
 
 1.  **Navigeer naar iBaMaFlex**
