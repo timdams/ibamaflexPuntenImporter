@@ -1,0 +1,46 @@
+{
+  "name": "ibamaflexPuntenImporter",
+  "tech": "JavaScript",
+  "techDetail": "HTML / CSS / JavaScript",
+  "branch": "master",
+  "lastCommit": "2026-01-21",
+  "lastCommitMsg": "warning",
+  "lastCommitHash": "0667c38",
+  "hasGit": true,
+  "remote": "https://github.com/timdams/ibamaflexPuntenImporter",
+  "tag": null,
+  "recentCommits": [
+    {
+      "hash": "0667c38",
+      "msg": "warning"
+    },
+    {
+      "hash": "3e2935d",
+      "msg": "readme"
+    },
+    {
+      "hash": "86bd970",
+      "msg": "readme"
+    },
+    {
+      "hash": "e679ff7",
+      "msg": "Add GitHub Pages deployment workflow"
+    },
+    {
+      "hash": "5c68186",
+      "msg": "Remove Demo folder from repository, keep locally"
+    }
+  ],
+  "workspace": "ibamaflexpuntenimporter.code-workspace",
+  "noteFiles": [
+    "changelog.md",
+    "wishlist.md"
+  ],
+  "path": "ibamaflexPuntenImporter",
+  "desc": "Een handige tool om puntenlijsten vanuit Excel automatisch in te laden in iBaMaFlex.",
+  "category": "Administratie",
+  "status": "active",
+  "tags": [],
+  "aiSummary": null,
+  "customNotes": null
+}
