@@ -1,21 +1,19 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Install Grade Importer</title>
+    <title>iBaMaFlex Punten Importer — installatie</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='4' y='4' width='56' height='56' rx='8' fill='%234f46e5'/><rect x='12' y='14' width='40' height='36' rx='3' fill='white'/><line x1='12' y1='26' x2='52' y2='26' stroke='%234f46e5' stroke-width='1.5'/><line x1='12' y1='38' x2='52' y2='38' stroke='%234f46e5' stroke-width='1.5'/><line x1='28' y1='14' x2='28' y2='50' stroke='%234f46e5' stroke-width='1.5'/><text x='20' y='24' font-size='9' font-weight='bold' fill='%234f46e5' text-anchor='middle'>A</text><text x='40' y='24' font-size='9' font-weight='bold' fill='%234f46e5' text-anchor='middle'>✓</text><text x='20' y='35' font-size='8' fill='%236b7280' text-anchor='middle'>—</text><text x='40' y='35' font-size='9' font-weight='bold' fill='%2316a34a' text-anchor='middle'>8</text><text x='20' y='47' font-size='8' fill='%236b7280' text-anchor='middle'>—</text><text x='40' y='47' font-size='9' font-weight='bold' fill='%2316a34a' text-anchor='middle'>9</text></svg>">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #f3f4f6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
             color: #1f2937;
+            margin: 0;
+            padding: 24px;
+            line-height: 1.5;
         }
 
         .card {
@@ -23,29 +21,96 @@
             padding: 2rem;
             border-radius: 1rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            max-width: 600px;
+            max-width: 640px;
+            margin: 0 auto;
         }
 
         h1 {
             margin-top: 0;
             color: #111827;
+            font-size: 1.6rem;
         }
 
-        p {
+        h2 {
+            color: #111827;
+            font-size: 1.15rem;
+            margin-top: 1.75rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.35rem;
+        }
+
+        .lead {
             color: #6b7280;
-            margin-bottom: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: #eef2ff;
+            color: #4f46e5;
+            padding: 2px 8px;
+            border-radius: 999px;
+            vertical-align: middle;
+            margin-left: 6px;
+        }
+
+        ol,
+        ul {
+            padding-left: 1.4rem;
+            margin: 0.5rem 0;
+        }
+
+        li {
+            margin-bottom: 0.45rem;
+        }
+
+        kbd {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-bottom-width: 2px;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #111827;
+            white-space: nowrap;
+        }
+
+        code {
+            background: #e5e7eb;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85em;
+        }
+
+        .drag-zone {
+            text-align: center;
+            background: #f9fafb;
+            border: 1px dashed #d1d5db;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            margin: 1rem 0 0.5rem;
+        }
+
+        .drag-hint {
+            display: block;
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-bottom: 0.6rem;
         }
 
         .bookmarklet-button {
             display: inline-block;
             background-color: #2563eb;
             color: white;
-            padding: 1rem 2rem;
+            padding: 1rem 1.75rem;
             border-radius: 0.5rem;
             text-decoration: none;
             font-weight: bold;
-            font-size: 1.125rem;
+            font-size: 1.05rem;
             cursor: move;
             border: 2px dashed #93c5fd;
         }
@@ -61,38 +126,92 @@
             cursor: not-allowed;
         }
 
-        .instruction {
-            margin-top: 2rem;
-            font-size: 0.875rem;
-            background: #eff6ff;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            color: #1e3a8a;
-            text-align: left;
+        .check {
+            font-size: 0.8rem;
+            color: #6b7280;
+            text-align: center;
+            margin-top: 0.25rem;
         }
 
-        code {
-            background: #e5e7eb;
-            padding: 2px 4px;
-            border-radius: 4px;
-            font-family: monospace;
+        .note {
+            margin-top: 1.5rem;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 0.5rem;
+            padding: 1rem 1rem 0.5rem;
+            font-size: 0.9rem;
+            color: #78350f;
+        }
+
+        .note ul {
+            margin-top: 0.5rem;
+        }
+
+        .footer {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+
+        .footer a,
+        .lead a,
+        .note a {
+            color: #4f46e5;
         }
     </style>
 </head>
 
 <body>
     <div class="card">
-        <h1>Grade Importer Installer (v10)</h1>
-        <p>Fixes: Added "Show Log" feature. Empty Excel cells now correctly marked as Absent if enabled.</p>
+        <h1>🔢 iBaMaFlex Punten Importer</h1>
+        <p class="lead">Laad puntenlijsten vanuit Excel automatisch in iBaMaFlex. Alles gebeurt in je eigen browser —
+            je Excel-bestand verlaat nooit je computer.</p>
 
-        <a id="bookmarklet-btn" class="bookmarklet-button" href="#">
-            🔢IbamaflexImporter
-        </a>
+        <h2>1. Installeren <span class="badge">één keer</span></h2>
+        <ol>
+            <li>Maak je <strong>bladwijzerbalk</strong> zichtbaar met <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd>.
+                (Dat is de balk met snelkoppelingen net onder de adresbalk.)</li>
+            <li><strong>Sleep</strong> de blauwe knop hieronder naar die balk. <em>Slepen, niet klikken!</em></li>
+            <li>Klaar — je hebt nu een knop <strong>🔢 IbamaflexImporter</strong> in je balk staan.</li>
+        </ol>
 
-        <div class="instruction">
-            <strong>Check:</strong> Hover over the button above. If the URL starts with <code>javascript:</code>, it's
-            ready.
+        <div class="drag-zone">
+            <span class="drag-hint">⬇ sleep deze knop naar je bladwijzerbalk</span>
+            <a id="bookmarklet-btn" class="bookmarklet-button" href="#">🔢 IbamaflexImporter</a>
         </div>
+        <p class="check">Twijfel je of het werkt? Houd je muis boven de knop. Begint de link met
+            <code>javascript:</code>, dan is hij klaar om te slepen.</p>
+
+        <h2>2. Gebruiken</h2>
+        <ol>
+            <li>Open in <strong>iBaMaFlex</strong> de puntenlijst die je wil invullen. <em>(Doe dit best groep per
+                    groep.)</em></li>
+            <li>Klik op de <strong>🔢 IbamaflexImporter</strong>-knop in je bladwijzerbalk. Rechtsboven verschijnt een
+                klein venster.</li>
+            <li>Kies je <strong>Excel-bestand</strong> (.xlsx) en controleer of de juiste kolommen gekozen zijn
+                (naam en cijfer).</li>
+            <li>Klik op <strong>Punten importeren</strong>. Bekijk daarna <strong>Toon log</strong> om te zien wie niet
+                gevonden is of op afwezig gezet werd.</li>
+            <li><strong>Sla op</strong> onderaan de pagina in iBaMaFlex om te bevestigen.</li>
+        </ol>
+
+        <div class="note">
+            <strong>⚠ Goed om te weten</strong>
+            <ul>
+                <li>Na een <strong>update</strong> van de tool moet je de knop <strong>opnieuw slepen</strong> naar je
+                    balk — de code zit ingebakken in je bladwijzer.</li>
+                <li>De tool vertrekt vanuit de studenten die <strong>in iBaMaFlex</strong> staan, niet vanuit je Excel.
+                    Lees de volledige werking en de aandachtspunten bij het opslaan in de
+                    <a href="https://github.com/timdams/ibamaflexPuntenImporter#readme" target="_blank"
+                        rel="noopener">README</a>.</li>
+            </ul>
+        </div>
+
+        <p class="footer">versie 11 ·
+            <a href="https://github.com/timdams/ibamaflexPuntenImporter" target="_blank" rel="noopener">broncode op
+                GitHub</a>
+        </p>
     </div>
 
     <!--
@@ -134,7 +253,7 @@
                 .catch(function (err) {
                     btn.classList.add('error');
                     btn.removeAttribute('href');
-                    btn.textContent = '⚠ Kon importer.js niet laden — open via een webserver';
+                    btn.textContent = '⚠ Kon de tool niet laden — herlaad de pagina (F5)';
                     console.error('Failed to load importer.js:', err);
                 });
         })();

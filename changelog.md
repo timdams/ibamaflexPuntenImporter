@@ -6,6 +6,9 @@
 - `debug_bookmarklet.js` verwijderd (verouderde orphan)
 - `howtotest.md` toegevoegd met drie testmethodes (console-paste, lokale server, productie-bookmarklet)
 - Naam-matching uitgebreid: optie voor namen verdeeld over 2 kolommen (achternaam/voornaam) met token-set fallback
+- `index.html` toegevoegd (redirect naar `install.html`) — fixt de 404 op de root-URL
+- App-overlay volledig vernederlandst + korte uitleg-zinnetjes bij elke optie (o.a. wat "eerste rij = kolomtitels" betekent)
+- `install.html` herschreven tot een stap-voor-stap installatiegids (bladwijzerbalk tonen met Ctrl+Shift+B, knop slepen, gebruik in iBaMaFlex) i.p.v. enkel een versielabel
 
 ## 2026-01-07
 - readme

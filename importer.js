@@ -41,6 +41,7 @@
         #gi-close:hover { color: #333; }
         .gi-row { margin-bottom: 10px; }
         .gi-label { display: block; margin-bottom: 4px; font-weight: 500; color: #555; }
+        .gi-help { font-size: 12px; color: #888; line-height: 1.35; margin-top: 4px; }
         .gi-select { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; }
         .gi-btn {
             background: #2563eb;
@@ -96,7 +97,7 @@
 
     overlay.innerHTML = `
         <div id="gi-header">
-            <span>Import Grades</span>
+            <span>Punten importeren</span>
             <span id="gi-close">&times;</span>
         </div>
         
@@ -107,47 +108,50 @@
         <div class="gi-row">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;">
                 <input type="checkbox" id="gi-header-check" checked> 
-                <span>Excel contains headers</span>
+                <span>Eerste rij bevat kolomtitels</span>
             </label>
+            <div class="gi-help" style="margin-left:26px;">De eerste rij van je Excel zijn titels zoals "Naam" of "Punt", geen echte student. Vink dit uit als rij 1 al meteen een student is.</div>
         </div>
 
         <div class="gi-row">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;">
                 <input type="checkbox" id="gi-empty-absent-check">
-                <span>Empty grade in excel = Absent</span>
+                <span>Lege cel in Excel = Afwezig</span>
             </label>
+            <div class="gi-help" style="margin-left:26px;">Studenten zonder ingevuld cijfer worden op "Afwezig" gezet. (Studenten die niet in je Excel staan, blijven altijd leeg.)</div>
         </div>
 
         <div class="gi-row">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;">
                 <input type="checkbox" id="gi-split-name-check">
-                <span>Naam verdeeld over 2 kolommen (achternaam/voornaam)</span>
+                <span>Naam staat in 2 aparte kolommen</span>
             </label>
+            <div class="gi-help" style="margin-left:26px;">Aanvinken als voornaam en achternaam in losse kolommen staan (bv. kolom A = achternaam, kolom B = voornaam).</div>
         </div>
 
         <div id="gi-mapping" style="display:none;">
             <div class="gi-row" id="gi-name-row">
-                <label class="gi-label">Student Name Column</label>
+                <label class="gi-label">Kolom met de naam</label>
                 <select id="gi-col-name" class="gi-select"></select>
             </div>
             <div class="gi-row" id="gi-lastname-row" style="display:none;">
-                <label class="gi-label">Achternaam kolom</label>
+                <label class="gi-label">Kolom met de achternaam</label>
                 <select id="gi-col-lastname" class="gi-select"></select>
             </div>
             <div class="gi-row" id="gi-firstname-row" style="display:none;">
-                <label class="gi-label">Voornaam kolom</label>
+                <label class="gi-label">Kolom met de voornaam</label>
                 <select id="gi-col-firstname" class="gi-select"></select>
             </div>
             <div class="gi-row">
-                <label class="gi-label">Grade Column</label>
+                <label class="gi-label">Kolom met het cijfer</label>
                 <select id="gi-col-grade" class="gi-select"></select>
             </div>
         </div>
 
-        <button id="gi-import-btn" class="gi-btn" disabled>Import Grades</button>
-        <button id="gi-log-btn" class="gi-btn gi-btn-secondary" style="display:none;">Show Log</button>
+        <button id="gi-import-btn" class="gi-btn" disabled>Punten importeren</button>
+        <button id="gi-log-btn" class="gi-btn gi-btn-secondary" style="display:none;">Toon log</button>
         
-        <div id="gi-status">Select an Excel file to start.</div>
+        <div id="gi-status">Kies een Excel-bestand om te starten.</div>
         <div id="gi-log-container"></div>
     `;
 
@@ -198,17 +202,17 @@
     logBtn.addEventListener('click', () => {
         if (logContainer.style.display === 'none') {
             logContainer.style.display = 'block';
-            logBtn.textContent = 'Hide Log';
+            logBtn.textContent = 'Verberg log';
             renderLog();
         } else {
             logContainer.style.display = 'none';
-            logBtn.textContent = 'Show Log';
+            logBtn.textContent = 'Toon log';
         }
     });
 
     function renderLog() {
         if (importLog.length === 0) {
-            logContainer.innerHTML = '<div class="gi-log-item">No events to report.</div>';
+            logContainer.innerHTML = '<div class="gi-log-item">Niets te melden.</div>';
             return;
         }
         logContainer.innerHTML = importLog.map(item => {
@@ -224,7 +228,7 @@
         importBtn.disabled = true;
         logBtn.style.display = 'none';
         logContainer.style.display = 'none';
-        statusDiv.textContent = 'Reading file...';
+        statusDiv.textContent = 'Bestand inlezen...';
 
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -243,7 +247,7 @@
                 jsonData = XLSX.utils.sheet_to_json(sheet, opts);
 
                 if (jsonData.length === 0) {
-                    statusDiv.textContent = 'File is empty.';
+                    statusDiv.textContent = 'Het bestand is leeg.';
                     return;
                 }
 
@@ -267,11 +271,11 @@
 
                 mappingDiv.style.display = 'block';
                 importBtn.disabled = false;
-                statusDiv.textContent = 'File loaded. Please confirm columns.';
+                statusDiv.textContent = 'Bestand geladen. Controleer hieronder de kolommen.';
 
             } catch (err) {
                 console.error(err);
-                statusDiv.textContent = 'Error parsing Excel file. Ensure it is a valid .xlsx file.';
+                statusDiv.textContent = 'Kon het Excel-bestand niet lezen. Zorg dat het een geldig .xlsx-bestand is.';
             }
         };
         reader.readAsArrayBuffer(currentFile);
@@ -350,7 +354,7 @@
     }
 
     function processImport(nameConfig, scoreKey, emptyAsAbsent) {
-        statusDiv.textContent = 'Processing...';
+        statusDiv.textContent = 'Bezig met verwerken...';
         importLog = []; // Reset log
         logBtn.style.display = 'none';
         logContainer.style.display = 'none';
@@ -454,7 +458,7 @@
                     scoreInput.style.backgroundColor = '#cfe2ff'; // Blue-ish
                     forceDirtyState();
                     matches++;
-                    importLog.push({ type: 'info', msg: `Set ABSENT for: ${domName}` });
+                    importLog.push({ type: 'info', msg: `Op AFWEZIG gezet: ${domName}` });
 
                 } else {
                     // Standard score
@@ -475,18 +479,18 @@
             } else {
                 notFound++;
                 // Log that this student was not found in Excel
-                importLog.push({ type: 'warn', msg: `Not found in Excel: ${domName}` });
+                importLog.push({ type: 'warn', msg: `Niet gevonden in Excel: ${domName}` });
             }
         });
 
-        statusDiv.innerHTML = `<strong>Done!</strong><br>Matched: ${matches}<br>Not found: ${notFound}`;
+        statusDiv.innerHTML = `<strong>Klaar!</strong><br>Ingevuld: ${matches}<br>Niet gevonden: ${notFound}`;
 
         // Show Log Button
         logBtn.style.display = 'block';
         if (importLog.length > 0) {
-            logBtn.textContent = `Show Log (${importLog.length})`;
+            logBtn.textContent = `Toon log (${importLog.length})`;
         } else {
-            logBtn.textContent = "Show Log";
+            logBtn.textContent = "Toon log";
         }
     }
 
