@@ -113,15 +113,30 @@
 
         <div class="gi-row">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;">
-                <input type="checkbox" id="gi-empty-absent-check"> 
+                <input type="checkbox" id="gi-empty-absent-check">
                 <span>Empty grade in excel = Absent</span>
             </label>
         </div>
 
+        <div class="gi-row">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;">
+                <input type="checkbox" id="gi-split-name-check">
+                <span>Naam verdeeld over 2 kolommen (achternaam/voornaam)</span>
+            </label>
+        </div>
+
         <div id="gi-mapping" style="display:none;">
-            <div class="gi-row">
+            <div class="gi-row" id="gi-name-row">
                 <label class="gi-label">Student Name Column</label>
                 <select id="gi-col-name" class="gi-select"></select>
+            </div>
+            <div class="gi-row" id="gi-lastname-row" style="display:none;">
+                <label class="gi-label">Achternaam kolom</label>
+                <select id="gi-col-lastname" class="gi-select"></select>
+            </div>
+            <div class="gi-row" id="gi-firstname-row" style="display:none;">
+                <label class="gi-label">Voornaam kolom</label>
+                <select id="gi-col-firstname" class="gi-select"></select>
             </div>
             <div class="gi-row">
                 <label class="gi-label">Grade Column</label>
@@ -143,8 +158,14 @@
     const fileInput = overlay.querySelector('#gi-file-input');
     const headerCheck = overlay.querySelector('#gi-header-check');
     const emptyAbsentCheck = overlay.querySelector('#gi-empty-absent-check');
+    const splitNameCheck = overlay.querySelector('#gi-split-name-check');
     const mappingDiv = overlay.querySelector('#gi-mapping');
+    const nameRow = overlay.querySelector('#gi-name-row');
+    const lastnameRow = overlay.querySelector('#gi-lastname-row');
+    const firstnameRow = overlay.querySelector('#gi-firstname-row');
     const nameSelect = overlay.querySelector('#gi-col-name');
+    const lastnameSelect = overlay.querySelector('#gi-col-lastname');
+    const firstnameSelect = overlay.querySelector('#gi-col-firstname');
     const gradeSelect = overlay.querySelector('#gi-col-grade');
     const importBtn = overlay.querySelector('#gi-import-btn');
     const logBtn = overlay.querySelector('#gi-log-btn');
@@ -165,6 +186,13 @@
 
     headerCheck.addEventListener('change', () => {
         if (currentFile) processFile();
+    });
+
+    splitNameCheck.addEventListener('change', () => {
+        const split = splitNameCheck.checked;
+        nameRow.style.display = split ? 'none' : '';
+        lastnameRow.style.display = split ? '' : 'none';
+        firstnameRow.style.display = split ? '' : 'none';
     });
 
     logBtn.addEventListener('click', () => {
@@ -224,6 +252,17 @@
 
                 // Populate Selects
                 populateSelect(nameSelect, headers, ['naam', 'student', 'name']);
+                // For split mode: default to first column = lastname, second = firstname
+                populateSelect(lastnameSelect, headers, ['achternaam', 'familienaam', 'lastname', 'last name', 'surname']);
+                populateSelect(firstnameSelect, headers, ['voornaam', 'firstname', 'first name', 'given name', 'prenom']);
+                if (headers.length >= 2) {
+                    if (!hasHeuristicMatch(headers, ['achternaam', 'familienaam', 'lastname', 'last name', 'surname'])) {
+                        lastnameSelect.selectedIndex = 0;
+                    }
+                    if (!hasHeuristicMatch(headers, ['voornaam', 'firstname', 'first name', 'given name', 'prenom'])) {
+                        firstnameSelect.selectedIndex = 1;
+                    }
+                }
                 populateSelect(gradeSelect, headers, ['punt', 'score', 'cijfer', 'grade', 'result']);
 
                 mappingDiv.style.display = 'block';
@@ -254,17 +293,63 @@
         select.selectedIndex = selectedIndex;
     }
 
+    function hasHeuristicMatch(options, heuristics) {
+        return options.some(opt => heuristics.some(h => String(opt).toLowerCase().includes(h)));
+    }
+
+    function normalizeName(s) {
+        return String(s || '')
+            .toLowerCase()
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function tokenize(s) {
+        return normalizeName(s).split(' ').filter(Boolean).sort().join(' ');
+    }
+
     importBtn.addEventListener('click', () => {
         if (!jsonData) return;
 
-        const nameKey = nameSelect.value;
         const scoreKey = gradeSelect.value;
         const emptyAsAbsent = emptyAbsentCheck.checked;
+        const splitName = splitNameCheck.checked;
 
-        processImport(nameKey, scoreKey, emptyAsAbsent);
+        const nameConfig = splitName
+            ? { split: true, lastKey: lastnameSelect.value, firstKey: firstnameSelect.value }
+            : { split: false, nameKey: nameSelect.value };
+
+        processImport(nameConfig, scoreKey, emptyAsAbsent);
     });
 
-    function processImport(nameKey, scoreKey, emptyAsAbsent) {
+    function getExcelName(record, nameConfig) {
+        if (nameConfig.split) {
+            const last = String(record[nameConfig.lastKey] || '').trim();
+            const first = String(record[nameConfig.firstKey] || '').trim();
+            return (last + ' ' + first).trim();
+        }
+        return String(record[nameConfig.nameKey] || '').trim();
+    }
+
+    function matchesDomName(cleanDomName, record, nameConfig) {
+        if (nameConfig.split) {
+            const last = normalizeName(record[nameConfig.lastKey]);
+            const first = normalizeName(record[nameConfig.firstKey]);
+            if (!last && !first) return false;
+            const candidates = [
+                `${last} ${first}`.trim(),
+                `${first} ${last}`.trim(),
+                `${last}, ${first}`.trim(),
+            ];
+            if (candidates.some(c => c === cleanDomName)) return true;
+            // Fall back to token-set match (order-independent)
+            return tokenize(`${last} ${first}`) === tokenize(cleanDomName);
+        }
+        const excelName = normalizeName(record[nameConfig.nameKey]);
+        return cleanDomName === excelName;
+    }
+
+    function processImport(nameConfig, scoreKey, emptyAsAbsent) {
         statusDiv.textContent = 'Processing...';
         importLog = []; // Reset log
         logBtn.style.display = 'none';
@@ -295,13 +380,10 @@
             if (!nameCell) return;
 
             const domName = nameCell.textContent.trim();
-            const cleanDomName = domName.replace(/\s*\[.*?\]$/, '').trim().toLowerCase();
+            const cleanDomName = normalizeName(domName.replace(/\s*\[.*?\]$/, ''));
             const originalDomName = cleanDomName; // For display
 
-            const record = jsonData.find(d => {
-                const excelName = String(d[nameKey]).trim().toLowerCase();
-                return cleanDomName === excelName;
-            });
+            const record = jsonData.find(d => matchesDomName(cleanDomName, d, nameConfig));
 
             const scoreInput = row.querySelector('input[name$="txtScore"]');
 
@@ -311,7 +393,7 @@
 
             if (record && scoreInput) {
                 // Found match
-                const excelNameKey = String(record[nameKey]).trim().toLowerCase();
+                const excelNameKey = normalizeName(getExcelName(record, nameConfig));
                 excelNamesSet.add(excelNameKey);
 
                 // FIXED: Treat undefined as empty string. 

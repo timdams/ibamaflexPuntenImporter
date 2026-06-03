@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-03
+- `install.html` haalt `importer.js` nu runtime via `fetch()` — geen gedupliceerde importer-source meer in install.html (single source of truth)
+- `bookmarklet_loader.js` opgeschoond tot een werkende dev-loader (laadt SheetJS + importer.js vanaf localhost)
+- `debug_bookmarklet.js` verwijderd (verouderde orphan)
+- `howtotest.md` toegevoegd met drie testmethodes (console-paste, lokale server, productie-bookmarklet)
+- Naam-matching uitgebreid: optie voor namen verdeeld over 2 kolommen (achternaam/voornaam) met token-set fallback
+
 ## 2026-01-07
 - readme
 - Add GitHub Pages deployment workflow

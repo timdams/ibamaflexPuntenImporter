@@ -3,32 +3,32 @@
   "tech": "JavaScript",
   "techDetail": "HTML / CSS / JavaScript",
   "branch": "master",
-  "lastCommit": "2026-01-21",
-  "lastCommitMsg": "warning",
-  "lastCommitHash": "0667c38",
+  "lastCommit": "2026-04-02",
+  "lastCommitMsg": "Merge branch 'master' of https://github.com/timdams/ibamaflexPuntenImporter",
+  "lastCommitHash": "2801614",
   "hasGit": true,
   "remote": "https://github.com/timdams/ibamaflexPuntenImporter",
   "tag": null,
   "recentCommits": [
     {
+      "hash": "2801614",
+      "msg": "Merge branch 'master' of https://github.com/timdams/ibamaflexPuntenImporter"
+    },
+    {
+      "hash": "b53eba6",
+      "msg": "icon"
+    },
+    {
+      "hash": "e08f2a8",
+      "msg": "Update README with usage instructions and image"
+    },
+    {
+      "hash": "9f2f40f",
+      "msg": "Add files via upload"
+    },
+    {
       "hash": "0667c38",
       "msg": "warning"
-    },
-    {
-      "hash": "3e2935d",
-      "msg": "readme"
-    },
-    {
-      "hash": "86bd970",
-      "msg": "readme"
-    },
-    {
-      "hash": "e679ff7",
-      "msg": "Add GitHub Pages deployment workflow"
-    },
-    {
-      "hash": "5c68186",
-      "msg": "Remove Demo folder from repository, keep locally"
     }
   ],
   "workspace": "ibamaflexpuntenimporter.code-workspace",
