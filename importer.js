@@ -88,6 +88,18 @@
         .gi-log-item:last-child { border-bottom: none; }
         .gi-log-warn { color: #d97706; }
         .gi-log-info { color: #2563eb; }
+        #gi-disclaimer {
+            margin-bottom: 15px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-left: 4px solid #dc2626;
+            border-radius: 4px;
+            padding: 8px 10px;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #7f1d1d;
+        }
+        #gi-disclaimer strong { color: #991b1b; }
     `;
     document.head.appendChild(style);
 
@@ -100,7 +112,13 @@
             <span>Punten importeren</span>
             <span id="gi-close">&times;</span>
         </div>
-        
+
+        <div id="gi-disclaimer">
+            <strong>⚠ Geen officiële AP-tool.</strong> Niet ontwikkeld door AP Hogeschool, maar door Tim Dams.
+            De lector blijft zelf eindverantwoordelijk voor het correct invoeren en controleren van de cijfers —
+            controleer altijd de punten vóór je opslaat.
+        </div>
+
         <div class="gi-row">
             <input type="file" id="gi-file-input" accept=".xlsx, .xls" style="width: 100%" />
         </div>
