@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-06-09
+- Optie "Kommapunten toestaan" toegevoegd: standaard worden decimale cijfers (bv. 12,5) overgeslagen en in de log gemeld; aanvinken neemt ze wél over (punt wordt automatisch omgezet naar komma). Summary toont aantal overgeslagen kommapunten.
+
 ## 2026-06-03
 - `install.html` haalt `importer.js` nu runtime via `fetch()` — geen gedupliceerde importer-source meer in install.html (single source of truth)
 - `bookmarklet_loader.js` opgeschoond tot een werkende dev-loader (laadt SheetJS + importer.js vanaf localhost)

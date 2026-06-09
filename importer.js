@@ -141,6 +141,14 @@
 
         <div class="gi-row">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;">
+                <input type="checkbox" id="gi-allow-decimal-check">
+                <span>Kommapunten toestaan</span>
+            </label>
+            <div class="gi-help" style="margin-left:26px;">Sta cijfers met decimalen toe (bv. 12,5). Staat dit uit, dan worden decimale cijfers <strong>niet</strong> ingevuld en in de log gemeld. Een punt (12.5) wordt automatisch omgezet naar een komma (12,5).</div>
+        </div>
+
+        <div class="gi-row">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal;">
                 <input type="checkbox" id="gi-split-name-check">
                 <span>Naam staat in 2 aparte kolommen</span>
             </label>
@@ -180,6 +188,7 @@
     const fileInput = overlay.querySelector('#gi-file-input');
     const headerCheck = overlay.querySelector('#gi-header-check');
     const emptyAbsentCheck = overlay.querySelector('#gi-empty-absent-check');
+    const allowDecimalCheck = overlay.querySelector('#gi-allow-decimal-check');
     const splitNameCheck = overlay.querySelector('#gi-split-name-check');
     const mappingDiv = overlay.querySelector('#gi-mapping');
     const nameRow = overlay.querySelector('#gi-name-row');
@@ -335,13 +344,14 @@
 
         const scoreKey = gradeSelect.value;
         const emptyAsAbsent = emptyAbsentCheck.checked;
+        const allowDecimal = allowDecimalCheck.checked;
         const splitName = splitNameCheck.checked;
 
         const nameConfig = splitName
             ? { split: true, lastKey: lastnameSelect.value, firstKey: firstnameSelect.value }
             : { split: false, nameKey: nameSelect.value };
 
-        processImport(nameConfig, scoreKey, emptyAsAbsent);
+        processImport(nameConfig, scoreKey, emptyAsAbsent, allowDecimal);
     });
 
     function getExcelName(record, nameConfig) {
@@ -371,7 +381,7 @@
         return cleanDomName === excelName;
     }
 
-    function processImport(nameConfig, scoreKey, emptyAsAbsent) {
+    function processImport(nameConfig, scoreKey, emptyAsAbsent, allowDecimal) {
         statusDiv.textContent = 'Bezig met verwerken...';
         importLog = []; // Reset log
         logBtn.style.display = 'none';
@@ -379,6 +389,7 @@
 
         let matches = 0;
         let notFound = 0;
+        let skippedDecimal = 0;
 
         // Find table rows
         const rows = document.querySelectorAll('#ctl00_ctl00_cphGeneral_cphMain_rgPuntenP_ctl00 tbody tr');
@@ -479,11 +490,24 @@
                     importLog.push({ type: 'info', msg: `Op AFWEZIG gezet: ${domName}` });
 
                 } else {
-                    // Standard score
+                    // Standard score — detecteer kommapunten (decimale cijfers)
+                    const numeric = parseFloat(effectiveScore.replace(',', '.'));
+                    const isDecimal = !isNaN(numeric) && !Number.isInteger(numeric);
+
+                    if (isDecimal && !allowDecimal) {
+                        // Optie staat uit: niet invullen, wel melden
+                        skippedDecimal++;
+                        importLog.push({ type: 'warn', msg: `Kommapunt overgeslagen: ${domName} (${rawScore}). Vink "Kommapunten toestaan" aan om dit cijfer wel over te nemen.` });
+                        return;
+                    }
+
+                    // Punt → komma normaliseren (iBaMaFlex verwacht een komma)
+                    const valueToSet = isDecimal ? effectiveScore.replace('.', ',') : effectiveScore;
+
                     if (scoreInput.onclick) scoreInput.onclick();
                     scoreInput.focus();
 
-                    scoreInput.value = effectiveScore;
+                    scoreInput.value = valueToSet;
 
                     if (scoreInput.onkeydown) scoreInput.onkeydown({ keyCode: 13 });
                     if (scoreInput.onchange) scoreInput.onchange();
@@ -501,7 +525,11 @@
             }
         });
 
-        statusDiv.innerHTML = `<strong>Klaar!</strong><br>Ingevuld: ${matches}<br>Niet gevonden: ${notFound}`;
+        let summaryHtml = `<strong>Klaar!</strong><br>Ingevuld: ${matches}<br>Niet gevonden: ${notFound}`;
+        if (skippedDecimal > 0) {
+            summaryHtml += `<br>Kommapunten overgeslagen: ${skippedDecimal}`;
+        }
+        statusDiv.innerHTML = summaryHtml;
 
         // Show Log Button
         logBtn.style.display = 'block';
