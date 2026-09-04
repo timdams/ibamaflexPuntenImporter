@@ -4,6 +4,7 @@
 - Update-waarschuwing: bij het openen haalt de tool `version.json` van GitHub Pages op en toont een gele balk in het venster wanneer je bladwijzer een oudere versie van `importer.js` bevat, met link naar de installatiepagina. Mislukt de check (offline, geblokkeerd), dan gebeurt er gewoon niets.
 - De versie wordt bij het deployen automatisch gestempeld: de workflow vervangt `__GI_VERSION__` in `importer.js` door de korte commit-hash van dat bestand en schrijft dezelfde waarde in `version.json`. Enkel wijzigingen aan `importer.js` triggeren dus een melding, niet bv. een README-aanpassing.
 - De actieve versie staat nu in de titelbalk van het venster (bv. `v2026-09-04`); de tooltip toont ook de commit-hash. Een niet-gestempelde build toont "lokale versie".
+- GitHub Pages stond op `legacy` (publiceerde de master-branch rechtstreeks), waardoor de workflow-output nooit online kwam en de versie-placeholders bleven staan. Pages staat nu op `build_type: workflow`, zodat het artifact van `deploy.yml` gepubliceerd wordt. Meteen ook het einde van de dubbele deployment (legacy `pages build and deployment` naast de eigen workflow).
 - Minifier in `install.html` laat `//` na een `:` staan, zodat URLs in string literals de bookmarklet-generatie overleven.
 
 ## 2026-09-04
