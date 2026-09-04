@@ -228,7 +228,9 @@
             <strong>⚠ Goed om te weten</strong>
             <ul>
                 <li>Na een <strong>update</strong> van de tool moet je de knop <strong>opnieuw slepen</strong> naar je
-                    balk — de code zit ingebakken in je bladwijzer.</li>
+                    balk — de code zit ingebakken in je bladwijzer. De tool zelf zegt het je: verschijnt er bovenaan
+                    het venster een gele balk "Nieuwe versie beschikbaar", kom dan hier terug en sleep de knop
+                    opnieuw (je oude bladwijzer mag je dan verwijderen).</li>
                 <li>De tool vertrekt vanuit de studenten die <strong>in iBaMaFlex</strong> staan, niet vanuit je Excel.
                     Lees de volledige werking en de aandachtspunten bij het opslaan in de
                     <a href="https://github.com/timdams/ibamaflexPuntenImporter#readme" target="_blank"
@@ -236,7 +238,7 @@
             </ul>
         </div>
 
-        <p class="footer">versie 11 ·
+        <p class="footer">versie 12 ·
             <a href="https://github.com/timdams/ibamaflexPuntenImporter" target="_blank" rel="noopener">broncode op
                 GitHub</a>
         </p>
@@ -260,11 +262,13 @@
                 })
                 .then(function (code) {
                     // Naive minification: strip // line comments and collapse whitespace.
-                    // Safe here because importer.js has no string literals containing "//"
-                    // and no semantic newline dependencies outside template literals
-                    // (where newlines collapsing to spaces is fine for CSS/HTML).
+                    // Een // die voorafgegaan wordt door een : blijft staan, zodat
+                    // URLs in string literals (https://...) intact blijven. Verder heeft
+                    // importer.js geen andere string literals met "//" en geen semantische
+                    // newline-afhankelijkheden buiten template literals (waar newlines die
+                    // spaties worden prima zijn voor CSS/HTML).
                     var minified = code
-                        .replace(/\/\/[^\n]*\n/g, '')
+                        .replace(/(^|[^:])\/\/[^\n]*/g, '$1')
                         .replace(/\s+/g, ' ')
                         .trim();
 

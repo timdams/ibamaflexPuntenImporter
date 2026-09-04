@@ -100,6 +100,18 @@
             color: #7f1d1d;
         }
         #gi-disclaimer strong { color: #991b1b; }
+        #gi-update {
+            margin-bottom: 15px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-left: 4px solid #d97706;
+            border-radius: 4px;
+            padding: 8px 10px;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #78350f;
+        }
+        #gi-update a { color: #92400e; font-weight: bold; }
     `;
     document.head.appendChild(style);
 
@@ -112,6 +124,8 @@
             <span>Punten importeren</span>
             <span id="gi-close">&times;</span>
         </div>
+
+        <div id="gi-update" style="display:none;"></div>
 
         <div id="gi-disclaimer">
             <strong>⚠ Geen officiële AP-tool.</strong> Niet ontwikkeld door AP Hogeschool, maar door Tim Dams.
@@ -204,6 +218,33 @@
     const logContainer = overlay.querySelector('#gi-log-container');
 
     closeBtn.onclick = () => overlay.remove();
+
+    // Versiecheck: waarschuwt wanneer er op GitHub een nieuwere importer.js staat.
+    // GI_VERSION wordt bij het deployen vervangen door de commit-hash van importer.js
+    // (zie .github/workflows/deploy.yml). Lokaal blijft de placeholder staan; dan
+    // slaan we de check over.
+    const GI_VERSION = '__GI_VERSION__';
+    const GI_BASE_URL = 'https://timdams.github.io/ibamaflexPuntenImporter/';
+    const updateDiv = overlay.querySelector('#gi-update');
+
+    function checkForUpdate() {
+        if (GI_VERSION.indexOf('__') === 0) return;
+        fetch(GI_BASE_URL + 'version.json?t=' + Date.now(), { cache: 'no-store' })
+            .then(r => r.ok ? r.json() : null)
+            .then(info => {
+                if (!info || !info.version || info.version === 'dev') return;
+                if (info.version === GI_VERSION) return;
+                const datum = info.date ? ' (' + info.date + ')' : '';
+                updateDiv.innerHTML = '<strong>⚠ Nieuwe versie beschikbaar' + datum + '.</strong> ' +
+                    'Jouw bladwijzer bevat een oudere versie van de tool. ' +
+                    '<a href="' + GI_BASE_URL + 'install.html" target="_blank" rel="noopener">Sleep de knop opnieuw</a> ' +
+                    'vanaf de installatiepagina om te updaten. Je kan gerust eerst deze import afwerken.';
+                updateDiv.style.display = 'block';
+            })
+            .catch(() => { /* offline of geblokkeerd: gewoon geen melding tonen */ });
+    }
+
+    checkForUpdate();
 
     let workbook = null;
     let jsonData = null;

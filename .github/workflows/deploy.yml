@@ -23,6 +23,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # volledige historiek: nodig om de laatste commit op importer.js te vinden
+          fetch-depth: 0
+      - name: Stempel versie in importer.js en version.json
+        run: |
+          VERSION=$(git log -1 --format=%h -- importer.js)
+          DATE=$(git log -1 --format=%cs -- importer.js)
+          echo "importer.js versie: $VERSION ($DATE)"
+          sed -i "s/__GI_VERSION__/$VERSION/" importer.js
+          cat > version.json <<EOF
+          {
+            "version": "$VERSION",
+            "date": "$DATE"
+          }
+          EOF
+          cat version.json
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact

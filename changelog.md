@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-04 (2)
+- Update-waarschuwing: bij het openen haalt de tool `version.json` van GitHub Pages op en toont een gele balk in het venster wanneer je bladwijzer een oudere versie van `importer.js` bevat, met link naar de installatiepagina. Mislukt de check (offline, geblokkeerd), dan gebeurt er gewoon niets.
+- De versie wordt bij het deployen automatisch gestempeld: de workflow vervangt `__GI_VERSION__` in `importer.js` door de korte commit-hash van dat bestand en schrijft dezelfde waarde in `version.json`. Enkel wijzigingen aan `importer.js` triggeren dus een melding, niet bv. een README-aanpassing.
+- Minifier in `install.html` laat `//` na een `:` staan, zodat URLs in string literals de bookmarklet-generatie overleven.
+
 ## 2026-09-04
 - Naam-matching houdt nu rekening met de extra codes die iBaMaFlex achter de naam plakt: `{8}`, `<J>` en `[B]` worden weggeknipt (vroeger enkel een `[...]` helemaal op het einde). De bijnaam tussen haakjes wordt zowel mét als zonder meegenomen bij het vergelijken, bv. `Intzidis Alki (Alkiviadis) {8} <J> [B]` matcht met `Intzidis Alki`.
 
