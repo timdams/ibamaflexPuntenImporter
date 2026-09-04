@@ -328,11 +328,32 @@
         return options.some(opt => heuristics.some(h => String(opt).toLowerCase().includes(h)));
     }
 
-    function normalizeName(s) {
+    // iBaMaFlex plakt achter de naam soms extra codes: {8} <J> [B].
+    // Die horen niet bij de naam en worden weggeknipt voor het vergelijken.
+    function stripNameMarkers(s) {
         return String(s || '')
+            .replace(/[{[<][^{}[\]<>]*[}\]>]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function normalizeName(s) {
+        return stripNameMarkers(s)
             .toLowerCase()
             .replace(/\s+/g, ' ')
             .trim();
+    }
+
+    // De bijnaam staat tussen haakjes: "Intzidis Alki (Alkiviadis)".
+    // We proberen zowel mét als zonder die bijnaam te matchen.
+    function nameVariants(s) {
+        const base = stripNameMarkers(s);
+        const variants = new Set([
+            normalizeName(base),
+            normalizeName(base.replace(/\([^)]*\)/g, ' ')),
+            normalizeName(base.replace(/[()]/g, ' ')),
+        ]);
+        return [...variants].filter(Boolean);
     }
 
     function tokenize(s) {
@@ -363,7 +384,11 @@
         return String(record[nameConfig.nameKey] || '').trim();
     }
 
-    function matchesDomName(cleanDomName, record, nameConfig) {
+    function matchesDomName(domVariants, record, nameConfig) {
+        const domSet = new Set(domVariants);
+        const domTokens = new Set(domVariants.map(tokenize));
+        const hits = (s) => nameVariants(s).some(v => domSet.has(v));
+
         if (nameConfig.split) {
             const last = normalizeName(record[nameConfig.lastKey]);
             const first = normalizeName(record[nameConfig.firstKey]);
@@ -373,12 +398,11 @@
                 `${first} ${last}`.trim(),
                 `${last}, ${first}`.trim(),
             ];
-            if (candidates.some(c => c === cleanDomName)) return true;
+            if (candidates.some(hits)) return true;
             // Fall back to token-set match (order-independent)
-            return tokenize(`${last} ${first}`) === tokenize(cleanDomName);
+            return domTokens.has(tokenize(`${last} ${first}`));
         }
-        const excelName = normalizeName(record[nameConfig.nameKey]);
-        return cleanDomName === excelName;
+        return hits(record[nameConfig.nameKey]);
     }
 
     function processImport(nameConfig, scoreKey, emptyAsAbsent, allowDecimal) {
@@ -413,10 +437,10 @@
             if (!nameCell) return;
 
             const domName = nameCell.textContent.trim();
-            const cleanDomName = normalizeName(domName.replace(/\s*\[.*?\]$/, ''));
-            const originalDomName = cleanDomName; // For display
+            const domVariants = nameVariants(domName);
+            const originalDomName = domVariants[0] || normalizeName(domName); // For display
 
-            const record = jsonData.find(d => matchesDomName(cleanDomName, d, nameConfig));
+            const record = jsonData.find(d => matchesDomName(domVariants, d, nameConfig));
 
             const scoreInput = row.querySelector('input[name$="txtScore"]');
 

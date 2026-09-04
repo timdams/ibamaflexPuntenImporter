@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-09-04
+- Naam-matching houdt nu rekening met de extra codes die iBaMaFlex achter de naam plakt: `{8}`, `<J>` en `[B]` worden weggeknipt (vroeger enkel een `[...]` helemaal op het einde). De bijnaam tussen haakjes wordt zowel mét als zonder meegenomen bij het vergelijken, bv. `Intzidis Alki (Alkiviadis) {8} <J> [B]` matcht met `Intzidis Alki`.
+
 ## 2026-06-09
 - Optie "Kommapunten toestaan" toegevoegd: standaard worden decimale cijfers (bv. 12,5) overgeslagen en in de log gemeld; aanvinken neemt ze wél over (punt wordt automatisch omgezet naar komma). Summary toont aantal overgeslagen kommapunten.
 
