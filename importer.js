@@ -39,6 +39,7 @@
             font-size: 20px;
         }
         #gi-close:hover { color: #333; }
+        #gi-version { font-weight: normal; font-size: 11px; color: #9ca3af; margin-left: 6px; }
         .gi-row { margin-bottom: 10px; }
         .gi-label { display: block; margin-bottom: 4px; font-weight: 500; color: #555; }
         .gi-help { font-size: 12px; color: #888; line-height: 1.35; margin-top: 4px; }
@@ -121,7 +122,7 @@
 
     overlay.innerHTML = `
         <div id="gi-header">
-            <span>Punten importeren</span>
+            <span>Punten importeren<span id="gi-version"></span></span>
             <span id="gi-close">&times;</span>
         </div>
 
@@ -219,16 +220,23 @@
 
     closeBtn.onclick = () => overlay.remove();
 
-    // Versiecheck: waarschuwt wanneer er op GitHub een nieuwere importer.js staat.
-    // GI_VERSION wordt bij het deployen vervangen door de commit-hash van importer.js
-    // (zie .github/workflows/deploy.yml). Lokaal blijft de placeholder staan; dan
-    // slaan we de check over.
+    // Versielabel in de titelbalk + waarschuwing wanneer er op GitHub een nieuwere
+    // importer.js staat. GI_VERSION en GI_DATE worden bij het deployen vervangen door
+    // de commit-hash en -datum van importer.js (zie .github/workflows/deploy.yml).
+    // Lokaal blijven de placeholders staan; dan tonen we "lokale versie" en slaan we
+    // de check over.
     const GI_VERSION = '__GI_VERSION__';
+    const GI_DATE = '__GI_DATE__';
     const GI_BASE_URL = 'https://timdams.github.io/ibamaflexPuntenImporter/';
     const updateDiv = overlay.querySelector('#gi-update');
+    const versionSpan = overlay.querySelector('#gi-version');
+
+    const isStamped = GI_VERSION.indexOf('__') !== 0;
+    versionSpan.textContent = isStamped ? 'v' + GI_DATE : 'lokale versie';
+    versionSpan.title = isStamped ? 'versie ' + GI_DATE + ' (' + GI_VERSION + ')' : 'niet-gestempelde versie, bv. lokaal getest';
 
     function checkForUpdate() {
-        if (GI_VERSION.indexOf('__') === 0) return;
+        if (!isStamped) return;
         fetch(GI_BASE_URL + 'version.json?t=' + Date.now(), { cache: 'no-store' })
             .then(r => r.ok ? r.json() : null)
             .then(info => {

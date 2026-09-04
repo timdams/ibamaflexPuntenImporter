@@ -32,6 +32,7 @@ jobs:
           DATE=$(git log -1 --format=%cs -- importer.js)
           echo "importer.js versie: $VERSION ($DATE)"
           sed -i "s/__GI_VERSION__/$VERSION/" importer.js
+          sed -i "s/__GI_DATE__/$DATE/" importer.js
           cat > version.json <<EOF
           {
             "version": "$VERSION",
